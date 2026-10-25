@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Memory Frenzy</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: white;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 1050px;
+      margin: auto;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 44px);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #a9b7cf;
+      margin-bottom: 24px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: #1e293b;
+      border: 1px solid #34445e;
+      border-radius: 12px;
+      padding: 12px 25px;
+      min-width: 125px;
+    }
+
+    .stat-label {
+      color: #9caec8;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      font-size: 27px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    #status {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: #facc15;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .emoji-card {
+      position: relative;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e293b;
+      border: 2px solid #34445e;
+      border-radius: 14px;
+      font-size: clamp(25px, 5vw, 62px);
+    }
+
+    .emoji-number {
+      position: absolute;
+      top: 7px;
+      left: 9px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    button {
+      padding: 15px 25px;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .hide-btn {
+      background: #6366f1;
+      color: white;
+    }
+
+    .timer-btn {
+      background: #334155;
+      color: white;
+    }
+
+    .new-btn {
+      display: block;
+      width: 100%;
+      max-width: 500px;
+      margin: 16px auto;
+      background: #22c55e;
+      color: #052e16;
+      font-size: 20px;
+    }
+
+    .instructions {
+      color: #94a3b8;
+      line-height: 1.6;
+      margin: 15px 0;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .emoji-grid { gap: 5px; }
+      .emoji-card {
+        border-radius: 7px;
+        border-width: 1px;
+      }
+      .emoji-number {
+        top: 3px;
+        left: 4px;
+        font-size: 9px;
+      }
+      button { font-size: 14px; padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <h1>🧠 Emoji Memory Frenzy</h1>
+    <p class="subtitle">
+      Memorize all 30 emojis and their exact positions!
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">ROUND</div>
+        <div class="stat-value" id="round">1</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">EMOJIS</div>
+        <div class="stat-value">30</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">TIME</div>
+        <div class="stat-value" id="timer">00:00</div>
+      </div>
+    </div>
+
+    <div id="status">👀 Memorization Phase</div>
+
+    <div class="emoji-grid" id="emojiGrid"></div>
+
+    <div class="controls">
+      <button class="hide-btn" id="hideButton">
+        🙈 Hide Emojis
+      </button>
+      <button class="timer-btn" id="timerButton">
+        ▶ Start Timer
+      </button>
+    </div>
+
+    <p class="instructions">
+      Memorize the emojis, then hide them.
+      Try to recall each emoji in its correct position.
+    </p>
+
+    <button class="new-btn" id="newButton">
+      🔀 New Order
+    </button>
+  </main>
+
+  <script>
+    const emojiPool = [
+      "🍎", "🍌", "🍇", "🍉", "🍓", "🍍",
+      "🥑", "🥕", "🍕", "🍔", "🍩", "🍿",
+      "⚽", "🏀", "🎸", "🎹", "🚗", "🚀",
+      "✈️", "🚲", "🐶", "🐱", "🦁", "🐸",
+      "🐧", "🦋", "🐙", "🦄", "🌈", "⭐",
+      "🌻", "🌵", "🔥", "💎", "🎈", "🎁",
+      "👑", "🤖", "👻", "🧩", "🎯", "🎲",
+      "🧸", "🪁", "🏆", "📸", "🔑", "💡",
+      "🌙", "☀️", "🍒", "🥨", "🦖", "🐢",
+      "🐝", "🐼", "🚁", "⛵", "🎨", "🪩",
+      "🍪", "🦊", "🐬", "🎺", "🏰", "🛸",
+      "🍄", "🌮", "🧲", "🪄"
+    ];
+
+    const grid = document.getElementById("emojiGrid");
+    const statusText = document.getElementById("status");
+    const roundText = document.getElementById("round");
+    const timerText = document.getElementById("timer");
+
+    const hideButton = document.getElementById("hideButton");
+    const timerButton = document.getElementById("timerButton");
+    const newButton = document.getElementById("newButton");
+
+    let currentEmojis = [];
+    let round = 1;
+    let hidden = false;
+    let seconds = 0;
+    let timerInterval = null;
+
+    // Randomize emojis using Fisher-Yates shuffle
+    function shuffleEmojis() {
+      const shuffled = [...emojiPool];
+
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [shuffled[i], shuffled[j]] =
+          [shuffled[j], shuffled[i]];
+      }
+
+      return shuffled.slice(0, 30);
+    }
+
+    // Display the 30 emojis
+    function renderGrid() {
+      grid.innerHTML = "";
+
+      currentEmojis.forEach((emoji, index) => {
+        const card = document.createElement("div");
+        card.className = "emoji-card";
+
+        const number = document.createElement("span");
+        number.className = "emoji-number";
+        number.textContent = index + 1;
+
+        const emojiText = document.createElement("span");
+        emojiText.textContent = hidden ? "❔" : emoji;
+
+        card.appendChild(number);
+        card.appendChild(emojiText);
+        grid.appendChild(card);
+      });
+
+      hideButton.textContent = hidden
+        ? "👀 Reveal Emojis"
+        : "🙈 Hide Emojis";
+
+      statusText.textContent = hidden
+        ? "🧠 Recall Phase"
+        : "👀 Memorization Phase";
+
+      roundText.textContent = round;
+    }
+
+    // Hide or reveal the emojis
+    function toggleEmojis() {
+      hidden = !hidden;
+      renderGrid();
+    }
+
+    // Update the timer display
+    function updateTimer() {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+
+      timerText.textContent =
+        String(minutes).padStart(2, "0") + ":" +
+        String(remainingSeconds).padStart(2, "0");
+    }
+
+    // Start or pause the timer
+    function toggleTimer() {
+      if (timerInterval !== null) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerButton.textContent = "▶ Resume Timer";
+        return;
+      }
+
+      timerButton.textContent = "⏸ Pause Timer";
+
+      timerInterval = setInterval(() => {
+        seconds++;
+        updateTimer();
+      }, 1000);
+    }
+
+    // Stop and reset the timer
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      seconds = 0;
+
+      updateTimer();
+      timerButton.textContent = "▶ Start Timer";
+    }
+
+    // Generate a new round
+    function newOrder() {
+      round++;
+      currentEmojis = shuffleEmojis();
+      hidden = false;
+
+      resetTimer();
+      renderGrid();
+    }
+
+    // Connect buttons
+    hideButton.addEventListener("click", toggleEmojis);
+    timerButton.addEventListener("click", toggleTimer);
+    newButton.addEventListener("click", newOrder);
+
+    // Initialize the first round
+    currentEmojis = shuffleEmojis();
+    renderGrid();
+    updateTimer();
+  </script>
+
+</body>
+</html>
