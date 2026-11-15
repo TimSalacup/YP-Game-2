@@ -147,6 +147,8 @@
     .answer-number { flex: 0 0 23px; color: var(--muted); text-align: right; font-size: 12px; }
     .answer-input { padding: 10px 8px; min-width: 0; font-size: 14px; }
     .answer-input:disabled { opacity: 1; }
+    .answer-input.is-autocorrected { border-color: #aaa2ff; box-shadow: inset 0 0 0 1px #aaa2ff; }
+    .autocorrect-note { font-size: 13px; color: var(--muted); text-align: center; margin: 0 0 14px; }
     .answer-input.is-correct { border-color: var(--green); background: #10382f; }
     .answer-input.is-incorrect { border-color: var(--red); background: #402331; }
     .results-panel { margin-top: 20px; }
@@ -232,6 +234,7 @@
           </div>
           <button class="btn-muted" id="hostKeyButton">Open Host Answer Key</button>
         </div>
+        <p class="autocorrect-note">Auto-correct is on: close spelling mistakes are fixed when you leave a box or press Enter. Capitalization doesn't matter. Only words from the full game vocabulary are considered.</p>
         <div class="answers-scroll" id="answersScroll">
           <div class="contestant-columns" id="contestantColumns"></div>
         </div>
@@ -276,6 +279,83 @@
     ];
 
     const $ = (id) => document.getElementById(id);
+
+    // Compare against the whole public word pool, never just the hidden round
+    // answers. This way correction cannot reveal whether a word is in this round.
+    const wordLookup = new Map(wordPool.map(word => [normalizeAnswer(word), word]));
+
+    // Restricted Damerau-Levenshtein distance: counts insertion, deletion,
+    // substitution, and adjacent letter swaps as single typing mistakes.
+    function spellingDistance(left, right) {
+      const rows = left.length + 1;
+      const cols = right.length + 1;
+      const distances = Array.from({ length: rows }, () => Array(cols).fill(0));
+      for (let row = 0; row < rows; row++) distances[row][0] = row;
+      for (let col = 0; col < cols; col++) distances[0][col] = col;
+
+      for (let row = 1; row < rows; row++) {
+        for (let col = 1; col < cols; col++) {
+          const mismatch = left[row - 1] === right[col - 1] ? 0 : 1;
+          let best = Math.min(
+            distances[row - 1][col] + 1,
+            distances[row][col - 1] + 1,
+            distances[row - 1][col - 1] + mismatch
+          );
+          if (row > 1 && col > 1 &&
+              left[row - 1] === right[col - 2] &&
+              left[row - 2] === right[col - 1]) {
+            best = Math.min(best, distances[row - 2][col - 2] + 1);
+          }
+          distances[row][col] = best;
+        }
+      }
+      return distances[rows - 1][cols - 1];
+    }
+
+    function suggestedCorrection(text) {
+      const answer = normalizeAnswer(text);
+      if (!answer) return null;
+
+      // Correct any letter case for already-valid answers without fuzzy matching.
+      const exact = wordLookup.get(answer);
+      if (exact) return exact;
+
+      // Avoid turning incomplete, very short, or unrelated guesses into words.
+      if (answer.length < 3) return null;
+      const maxEdits = answer.length >= 7 ? 2 : 1;
+      let nearest = null;
+      let nearestDistance = maxEdits + 1;
+      let tied = false;
+      for (const word of wordPool) {
+        const normalizedWord = normalizeAnswer(word);
+        if (Math.abs(normalizedWord.length - answer.length) > maxEdits) continue;
+        const distance = spellingDistance(answer, normalizedWord);
+        if (distance < nearestDistance) {
+          nearest = word;
+          nearestDistance = distance;
+          tied = false;
+        } else if (distance === nearestDistance) {
+          tied = true;
+        }
+      }
+      // Never choose arbitrarily between two equally plausible spellings.
+      return nearest && !tied ? nearest : null;
+    }
+
+    function autocorrectInput(input) {
+      if (input.disabled) return;
+      const before = input.value;
+      const correction = suggestedCorrection(before);
+      const trimmed = before.trim().replace(/\s+/g, ' ');
+      input.value = correction || trimmed;
+      if (correction && normalizeAnswer(before) !== normalizeAnswer(correction)) {
+        input.classList.add('is-autocorrected');
+        input.title = `Auto-corrected: ${trimmed} → ${correction}`;
+      } else if (!correction || !input.classList.contains('is-autocorrected')) {
+        input.classList.remove('is-autocorrected');
+        input.removeAttribute('title');
+      }
+    }
     const state = {
       phase: 'setup', // setup, memorize, guess, results
       wordCount: 30,
@@ -372,6 +452,20 @@
           input.placeholder = 'Enter word';
           input.autocomplete = 'off';
           input.spellcheck = false;
+          input.autocapitalize = 'off';
+          input.addEventListener('blur', () => autocorrectInput(input));
+          input.addEventListener('input', () => {
+            input.classList.remove('is-autocorrected');
+            input.removeAttribute('title');
+          });
+          input.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' || event.isComposing) return;
+            event.preventDefault();
+            autocorrectInput(input);
+            const next = column.querySelectorAll('.answer-input')[index + 1];
+            if (next) next.focus();
+            else input.blur();
+          });
           row.append(number, input);
           column.append(row);
         }
@@ -404,7 +498,7 @@
         $('status').textContent = 'Guessing Phase';
         $('phaseNote').textContent = 'Contestants: type each word in its original numbered position.';
         $('phaseButton').textContent = 'Check Answers and Reveal Words';
-        $('instructions').textContent = 'Each column belongs to one contestant. Scroll sideways to reach additional contestants.';
+        $('instructions').textContent = 'Each column belongs to one contestant. Minor typos are corrected without revealing the round answers. Scroll sideways for more contestants.';
       } else if (isResults) {
         $('status').textContent = 'Round Complete';
         $('phaseNote').textContent = 'Review the revealed sequence and contestant answers.';
@@ -490,6 +584,7 @@
       closeHostKey();
       const points = Array(state.contestantCount).fill(0);
       $('contestantColumns').querySelectorAll('.answer-input').forEach((input) => {
+        autocorrectInput(input);
         const contestant = Number(input.dataset.contestant);
         const index = Number(input.dataset.index);
         const correct = normalizeAnswer(input.value) === normalizeAnswer(state.words[index]);
