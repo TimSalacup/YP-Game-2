@@ -1,529 +1,557 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Emoji Memory Frenzy</title>
-
+  <title>Word Memory Challenge</title>
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      color-scheme: dark;
+      --page: #0b1323;
+      --panel: #162339;
+      --panel-strong: #1e304a;
+      --outline: #334966;
+      --text: #f4f7fc;
+      --muted: #a8bad2;
+      --yellow: #f6cd64;
+      --blue: #777cf4;
+      --green: #49d49a;
+      --red: #fb8690;
     }
 
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body {
       margin: 0;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: white;
-      text-align: center;
+      min-height: 100vh;
+      padding: 32px 18px 64px;
+      background: radial-gradient(circle at 50% -160px, #24395b, var(--page) 60%);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    h1 {
-      font-size: clamp(28px, 4vw, 44px);
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #a9b7cf;
-      margin-bottom: 24px;
-    }
-
-    /* GAME MASTER SETTINGS */
-
-    .settings {
-      background: #1e293b;
-      border: 1px solid #34445e;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .settings h2 {
-      margin-top: 0;
-      font-size: 20px;
-      color: #facc15;
-    }
-
-    .settings-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    .settings label {
-      font-size: 17px;
-      font-weight: bold;
-    }
-
-    .settings input {
-      width: 100px;
-      padding: 12px;
-      font-size: 20px;
-      text-align: center;
-      border-radius: 8px;
-      border: 2px solid #6366f1;
-      background: #0f172a;
-      color: white;
-    }
-
-    .settings input:focus {
-      outline: 2px solid #a5b4fc;
-    }
-
-    /* STATISTICS */
-
-    .stats {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
-    }
-
-    .stat {
-      background: #1e293b;
-      border: 1px solid #34445e;
-      border-radius: 12px;
-      padding: 12px 25px;
-      min-width: 125px;
-    }
-
-    .stat-label {
-      color: #9caec8;
+    .container { max-width: 1170px; margin: auto; }
+    .site-header { text-align: center; margin-bottom: 28px; }
+    .eyebrow {
+      color: var(--yellow);
+      font-weight: 750;
       font-size: 12px;
-      letter-spacing: 1px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
     }
-
-    .stat-value {
-      font-size: 27px;
-      font-weight: bold;
-      margin-top: 5px;
+    h1 { margin: 8px 0 10px; font-size: clamp(30px, 4.5vw, 48px); letter-spacing: -.035em; }
+    h2 { margin: 0 0 18px; font-size: 23px; }
+    h3 { margin: 0; font-size: 16px; }
+    p { line-height: 1.55; }
+    .subtitle { margin: 0; color: var(--muted); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      box-shadow: 0 14px 45px rgba(0,0,0,.14);
+      padding: clamp(18px, 3vw, 30px);
     }
-
-    #status {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 16px;
-      color: #facc15;
+    .setup { max-width: 710px; margin: 34px auto 0; }
+    .setup h2 { color: var(--yellow); }
+    .setup-description { color: var(--muted); margin: -6px 0 20px; }
+    .setup-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+    .field { display: flex; gap: 8px; flex-direction: column; text-align: left; }
+    label { color: var(--text); font-weight: 650; }
+    input[type="number"], .answer-input {
+      width: 100%;
+      border: 1px solid #516486;
+      background: #0b172b;
+      color: var(--text);
+      border-radius: 9px;
+      font: inherit;
+      padding: 12px 13px;
     }
-
-    /* EMOJI GRID */
-
-    .emoji-grid {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
+    input:focus-visible, button:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+    .helper { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 750;
+      padding: 13px 19px;
+      cursor: pointer;
+      transition: transform .15s, filter .15s;
     }
-
-    .emoji-card {
+    button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    button:disabled { opacity: .55; cursor: default; transform: none; }
+    .btn-yellow { background: var(--yellow); color: #181c26; }
+    .btn-blue { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #08261e; }
+    .btn-muted { background: #2b405d; color: var(--text); }
+    .start-button { display: block; width: 100%; margin-top: 24px; font-size: 17px; }
+    .game-header { text-align: center; }
+    .stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 10px 0 20px; }
+    .stat {
+      border: 1px solid var(--outline);
+      background: var(--panel);
+      border-radius: 12px;
+      min-width: 130px;
+      padding: 13px 24px;
+      text-align: center;
+    }
+    .stat-label { color: var(--muted); font-size: 11px; letter-spacing: .12em; font-weight: 700; }
+    .stat-value { font-size: 27px; margin-top: 3px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .status { font-size: 20px; color: var(--yellow); font-weight: 750; margin: 16px 0 6px; }
+    .phase-note { color: var(--muted); margin: 0 0 22px; }
+    .word-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 11px; }
+    .word-card {
       position: relative;
-      aspect-ratio: 1;
+      min-height: 100px;
+      background: var(--panel-strong);
+      border: 1px solid var(--outline);
+      border-radius: 13px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 29px 9px 13px;
+      text-align: center;
+      font-size: clamp(13px, 1.45vw, 19px);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .word-position { position: absolute; top: 10px; left: 12px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 11px; margin: 23px 0; }
+    .instructions { text-align: center; margin: 14px 0; color: var(--muted); }
+    .host-help {
+      background: #24344f;
+      border: 1px solid #445e7d;
+      border-radius: 13px;
+      padding: 16px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      background: #1e293b;
-      border: 2px solid #34445e;
-      border-radius: 14px;
-      font-size: clamp(25px, 5vw, 62px);
-    }
-
-    .emoji-number {
-      position: absolute;
-      top: 7px;
-      left: 9px;
-      font-size: 13px;
-      color: #94a3b8;
-    }
-
-    /* BUTTONS */
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 15px;
       margin-bottom: 18px;
+      flex-wrap: wrap;
     }
-
-    button {
-      padding: 15px 25px;
-      border: none;
-      border-radius: 10px;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.15s, opacity 0.15s;
+    .host-help strong { display: block; margin-bottom: 3px; }
+    .host-help p { margin: 0; color: var(--muted); font-size: 13px; }
+    .answers-scroll { overflow-x: auto; padding: 1px 1px 14px; }
+    .contestant-columns { display: grid; gap: 14px; align-items: start; }
+    .contestant-column {
+      background: var(--panel);
+      border: 1px solid var(--outline);
+      border-radius: 14px;
+      padding: 13px 11px;
+      min-width: 0;
     }
-
-    button:hover {
-      opacity: 0.9;
-      transform: translateY(-2px);
+    .contestant-title { text-align: center; padding: 8px 4px 14px; border-bottom: 1px solid var(--outline); margin-bottom: 12px; }
+    .contestant-title h3 { overflow-wrap: anywhere; }
+    .answer-row { display: flex; gap: 7px; align-items: center; margin-bottom: 9px; }
+    .answer-row:last-child { margin-bottom: 0; }
+    .answer-number { flex: 0 0 23px; color: var(--muted); text-align: right; font-size: 12px; }
+    .answer-input { padding: 10px 8px; min-width: 0; font-size: 14px; }
+    .answer-input:disabled { opacity: 1; }
+    .answer-input.is-correct { border-color: var(--green); background: #10382f; }
+    .answer-input.is-incorrect { border-color: var(--red); background: #402331; }
+    .results-panel { margin-top: 20px; }
+    .results-panel h2 { color: var(--yellow); margin-bottom: 8px; }
+    .results-description { margin: 0 0 16px; color: var(--muted); }
+    .scores { display: flex; gap: 12px; flex-wrap: wrap; }
+    .score-item {
+      background: #253c53;
+      border: 1px solid #42627a;
+      border-radius: 12px;
+      min-width: 155px;
+      padding: 15px 19px;
+      flex: 1;
     }
-
-    .apply-btn {
-      background: #facc15;
-      color: #111827;
+    .score-name { color: var(--muted); font-size: 13px; }
+    .score-value { font-weight: 800; font-size: 25px; margin-top: 4px; }
+    .results-key { color: var(--muted); font-size: 13px; margin-bottom: 0; }
+    .bottom-links { text-align: center; }
+    .text-button { background: none; color: var(--muted); padding: 9px 12px; text-decoration: underline; font-size: 14px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 740px) {
+      .word-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+      .word-card { min-height: 87px; }
     }
-
-    .hide-btn {
-      background: #6366f1;
-      color: white;
-    }
-
-    .timer-btn {
-      background: #334155;
-      color: white;
-    }
-
-    .new-btn {
-      display: block;
-      width: 100%;
-      max-width: 500px;
-      margin: 16px auto;
-      background: #22c55e;
-      color: #052e16;
-      font-size: 20px;
-    }
-
-    .instructions {
-      color: #94a3b8;
-      line-height: 1.6;
-      margin: 15px 0;
-    }
-
-    @media (max-width: 600px) {
-      body {
-        padding: 12px;
-      }
-
-      .emoji-grid {
-        gap: 5px;
-      }
-
-      .emoji-card {
-        border-radius: 7px;
-        border-width: 1px;
-      }
-
-      .emoji-number {
-        top: 3px;
-        left: 4px;
-        font-size: 9px;
-      }
-
-      button {
-        font-size: 14px;
-        padding: 12px;
-      }
+    @media (max-width: 480px) {
+      body { padding: 20px 11px 50px; }
+      .setup-fields { grid-template-columns: 1fr; }
+      .stat { min-width: 100px; flex: 1; padding: 11px 8px; }
+      .stat-value { font-size: 23px; }
+      .word-card { padding: 28px 6px 10px; font-size: 14px; }
+      .controls button { flex: 1 1 180px; }
     }
   </style>
 </head>
-
 <body>
-
   <main class="container">
+    <header class="site-header">
+      <div class="eyebrow">Multiplayer memory game</div>
+      <h1>Word Memory Challenge</h1>
+      <p class="subtitle">Memorize the sequence. Hide the words. Enter them in the correct order.</p>
+    </header>
 
-    <h1>🧠 Emoji Memory Frenzy</h1>
-
-    <p class="subtitle">
-      Memorize the emojis and their exact positions!
-    </p>
-
-    <!-- GAME MASTER SETTINGS -->
-
-    <section class="settings">
-      <h2>⚙️ Game Master Settings</h2>
-
-      <div class="settings-row">
-        <label for="emojiCount">
-          Number of Emojis:
-        </label>
-
-        <input
-          type="number"
-          id="emojiCount"
-          min="1"
-          max="70"
-          value="30"
-        >
-
-        <button class="apply-btn" id="applyButton">
-          Apply
-        </button>
+    <section class="panel setup" id="setupSection" aria-labelledby="setupTitle">
+      <h2 id="setupTitle">Game Host Settings</h2>
+      <p class="setup-description">Choose the number of words and contestants before any words are revealed.</p>
+      <div class="setup-fields">
+        <div class="field">
+          <label for="wordCount">Number of words</label>
+          <input type="number" id="wordCount" min="1" max="70" value="30" inputmode="numeric">
+          <span class="helper">1 to 70 unique words</span>
+        </div>
+        <div class="field">
+          <label for="contestantCount">Number of contestants</label>
+          <input type="number" id="contestantCount" min="1" max="20" value="3" inputmode="numeric">
+          <span class="helper">1 to 20 answer columns</span>
+        </div>
       </div>
+      <button class="btn-yellow start-button" id="startButton">Start Round and Show Words</button>
     </section>
 
-    <!-- GAME STATISTICS -->
-
-    <div class="stats">
-
-      <div class="stat">
-        <div class="stat-label">ROUND</div>
-        <div class="stat-value" id="round">1</div>
+    <section id="gameSection" hidden>
+      <div class="stats" aria-label="Game statistics">
+        <div class="stat"><div class="stat-label">ROUND</div><div class="stat-value" id="round">1</div></div>
+        <div class="stat"><div class="stat-label">WORDS</div><div class="stat-value" id="wordTotal">30</div></div>
+        <div class="stat"><div class="stat-label">CONTESTANTS</div><div class="stat-value" id="contestantTotal">3</div></div>
+        <div class="stat"><div class="stat-label">TIME</div><div class="stat-value" id="timer">00:00</div></div>
       </div>
 
-      <div class="stat">
-        <div class="stat-label">EMOJIS</div>
-        <div class="stat-value" id="emojiTotal">30</div>
+      <div class="game-header">
+        <div class="status" id="status" aria-live="polite">Memorization Phase</div>
+        <p class="phase-note" id="phaseNote">Memorize these words in their numbered order.</p>
       </div>
 
-      <div class="stat">
-        <div class="stat-label">TIME</div>
-        <div class="stat-value" id="timer">00:00</div>
+      <section id="memoryPanel" aria-label="Words to memorize">
+        <div class="word-grid" id="wordGrid"></div>
+      </section>
+
+      <section id="guessPanel" hidden aria-label="Contestant answer columns">
+        <div class="host-help">
+          <div>
+            <strong>Host answer key</strong>
+            <p>The answer key opens in a smaller, separate window for the host. Keep it off the contestant display.</p>
+          </div>
+          <button class="btn-muted" id="hostKeyButton">Open Host Answer Key</button>
+        </div>
+        <div class="answers-scroll" id="answersScroll">
+          <div class="contestant-columns" id="contestantColumns"></div>
+        </div>
+      </section>
+
+      <section class="panel results-panel" id="resultsPanel" hidden aria-label="Contestant scores">
+        <h2>Round Results</h2>
+        <p class="results-description">Each correct word in the correct numbered position earns one point.</p>
+        <div class="scores" id="scores"></div>
+        <p class="results-key">Green inputs are correct; red inputs are incorrect. The full word sequence is shown above.</p>
+      </section>
+
+      <div class="controls">
+        <button class="btn-blue" id="phaseButton">Hide Words and Start Guessing</button>
+        <button class="btn-muted" id="timerButton">Start Timer</button>
+        <button class="btn-green" id="newButton">New Order</button>
       </div>
-
-    </div>
-
-    <div id="status">👀 Memorization Phase</div>
-
-    <!-- EMOJI GRID -->
-
-    <div class="emoji-grid" id="emojiGrid"></div>
-
-    <!-- GAME CONTROLS -->
-
-    <div class="controls">
-
-      <button class="hide-btn" id="hideButton">
-        🙈 Hide Emojis
-      </button>
-
-      <button class="timer-btn" id="timerButton">
-        ▶ Start Timer
-      </button>
-
-    </div>
-
-    <p class="instructions">
-      Memorize the emojis, then hide them.
-      Try to recall each emoji in its correct position.
-    </p>
-
-    <button class="new-btn" id="newButton">
-      🔀 New Order
-    </button>
-
+      <div class="bottom-links">
+        <button class="text-button" id="settingsButton">Change word / contestant count</button>
+      </div>
+      <p class="instructions" id="instructions">When everyone is ready, hide the words to open the separate host answer key and start guessing.</p>
+    </section>
   </main>
 
   <script>
+    'use strict';
 
-    const emojiPool = [
-      "🍎", "🍌", "🍇", "🍉", "🍓", "🍍",
-      "🥑", "🥕", "🍕", "🍔", "🍩", "🍿",
-      "⚽", "🏀", "🎸", "🎹", "🚗", "🚀",
-      "✈️", "🚲", "🐶", "🐱", "🦁", "🐸",
-      "🐧", "🦋", "🐙", "🦄", "🌈", "⭐",
-      "🌻", "🌵", "🔥", "💎", "🎈", "🎁",
-      "👑", "🤖", "👻", "🧩", "🎯", "🎲",
-      "🧸", "🪁", "🏆", "📸", "🔑", "💡",
-      "🌙", "☀️", "🍒", "🥨", "🦖", "🐢",
-      "🐝", "🐼", "🚁", "⛵", "🎨", "🪩",
-      "🍪", "🦊", "🐬", "🎺", "🏰", "🛸",
-      "🍄", "🌮", "🧲", "🪄"
+    // Each entry is a word or a simple phrase. No emoji characters are used.
+    const wordPool = [
+      'Apple', 'Banana', 'Grapes', 'Watermelon', 'Strawberry', 'Pineapple',
+      'Avocado', 'Carrot', 'Pizza', 'Burger', 'Doughnut', 'Popcorn',
+      'Soccer', 'Basketball', 'Guitar', 'Piano', 'Car', 'Rocket',
+      'Airplane', 'Bicycle', 'Dog', 'Cat', 'Lion', 'Frog',
+      'Penguin', 'Butterfly', 'Octopus', 'Unicorn', 'Rainbow', 'Star',
+      'Sunflower', 'Cactus', 'Fire', 'Diamond', 'Balloon', 'Gift',
+      'Crown', 'Robot', 'Ghost', 'Puzzle', 'Target', 'Dice',
+      'Teddy Bear', 'Kite', 'Trophy', 'Camera', 'Key', 'Light Bulb',
+      'Moon', 'Sun', 'Cherries', 'Pretzel', 'Dinosaur', 'Turtle',
+      'Bee', 'Panda', 'Helicopter', 'Sailboat', 'Paint', 'Disco Ball',
+      'Cookie', 'Fox', 'Dolphin', 'Trumpet', 'Castle', 'UFO',
+      'Mushroom', 'Taco', 'Magnet', 'Magic Wand'
     ];
 
-    const grid = document.getElementById("emojiGrid");
-    const statusText = document.getElementById("status");
-    const roundText = document.getElementById("round");
-    const timerText = document.getElementById("timer");
-    const emojiTotalText = document.getElementById("emojiTotal");
-    const emojiCountInput = document.getElementById("emojiCount");
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      phase: 'setup', // setup, memorize, guess, results
+      wordCount: 30,
+      contestantCount: 3,
+      round: 1,
+      words: [],
+      seconds: 0,
+      timerInterval: null,
+      hostWindow: null
+    };
 
-    const hideButton = document.getElementById("hideButton");
-    const timerButton = document.getElementById("timerButton");
-    const newButton = document.getElementById("newButton");
-    const applyButton = document.getElementById("applyButton");
-
-    let currentEmojis = [];
-    let emojiCount = 30;
-    let round = 1;
-    let hidden = false;
-    let seconds = 0;
-    let timerInterval = null;
-
-    // RANDOMIZE EMOJIS
-
-    function shuffleEmojis() {
-      const shuffled = [...emojiPool];
-
-      for (let i = shuffled.length - 1; i > 0; i--) {
+    function shuffledWords() {
+      const values = [...wordPool];
+      for (let i = values.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-
-        [shuffled[i], shuffled[j]] =
-          [shuffled[j], shuffled[i]];
+        [values[i], values[j]] = [values[j], values[i]];
       }
-
-      return shuffled.slice(0, emojiCount);
-    }
-
-    // AUTOMATICALLY ADJUST GRID
-
-    function updateGridColumns() {
-      let columns;
-
-      if (emojiCount <= 4) {
-        columns = 2;
-      } else if (emojiCount <= 9) {
-        columns = 3;
-      } else if (emojiCount <= 16) {
-        columns = 4;
-      } else if (emojiCount <= 25) {
-        columns = 5;
-      } else {
-        columns = 6;
-      }
-
-      grid.style.gridTemplateColumns =
-        `repeat(${columns}, minmax(0, 1fr))`;
-    }
-
-    // DISPLAY EMOJIS
-
-    function renderGrid() {
-      grid.innerHTML = "";
-
-      updateGridColumns();
-
-      currentEmojis.forEach((emoji, index) => {
-
-        const card = document.createElement("div");
-        card.className = "emoji-card";
-
-        const number = document.createElement("span");
-        number.className = "emoji-number";
-        number.textContent = index + 1;
-
-        const emojiText = document.createElement("span");
-        emojiText.textContent = hidden ? "❔" : emoji;
-
-        card.appendChild(number);
-        card.appendChild(emojiText);
-        grid.appendChild(card);
-
-      });
-
-      hideButton.textContent = hidden
-        ? "👀 Reveal Emojis"
-        : "🙈 Hide Emojis";
-
-      statusText.textContent = hidden
-        ? "🧠 Recall Phase"
-        : "👀 Memorization Phase";
-
-      roundText.textContent = round;
-      emojiTotalText.textContent = emojiCount;
-    }
-
-    // HIDE OR REVEAL EMOJIS
-
-    function toggleEmojis() {
-      hidden = !hidden;
-      renderGrid();
-    }
-
-    // TIMER
-
-    function updateTimer() {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-
-      timerText.textContent =
-        String(minutes).padStart(2, "0") + ":" +
-        String(remainingSeconds).padStart(2, "0");
-    }
-
-    function toggleTimer() {
-      if (timerInterval !== null) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerButton.textContent = "▶ Resume Timer";
-        return;
-      }
-
-      timerButton.textContent = "⏸ Pause Timer";
-
-      timerInterval = setInterval(() => {
-        seconds++;
-        updateTimer();
-      }, 1000);
+      return values.slice(0, state.wordCount);
     }
 
     function resetTimer() {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      seconds = 0;
-
-      updateTimer();
-      timerButton.textContent = "▶ Start Timer";
+      pauseTimer();
+      state.seconds = 0;
+      showTimer();
     }
 
-    // APPLY EMOJI COUNT
+    function showTimer() {
+      const minutes = Math.floor(state.seconds / 60);
+      const seconds = state.seconds % 60;
+      $('timer').textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    }
 
-    function applyEmojiCount() {
-      const requestedCount = Number(emojiCountInput.value);
+    function pauseTimer() {
+      if (state.timerInterval !== null) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+      $('timerButton').textContent = state.seconds > 0 ? 'Resume Timer' : 'Start Timer';
+    }
 
-      if (
-        !Number.isInteger(requestedCount) ||
-        requestedCount < 1 ||
-        requestedCount > emojiPool.length
-      ) {
-        alert(
-          `Please enter a whole number between 1 and ${emojiPool.length}.`
-        );
+    function toggleTimer() {
+      if (state.timerInterval !== null) {
+        pauseTimer();
+      } else {
+        state.timerInterval = setInterval(() => { state.seconds++; showTimer(); }, 1000);
+        $('timerButton').textContent = 'Pause Timer';
+      }
+    }
+
+    function renderWordGrid() {
+      const fragment = document.createDocumentFragment();
+      state.words.forEach((word, index) => {
+        const card = document.createElement('div');
+        card.className = 'word-card';
+        const number = document.createElement('span');
+        number.className = 'word-position';
+        number.textContent = String(index + 1);
+        const content = document.createElement('span');
+        content.textContent = word;
+        card.append(number, content);
+        fragment.append(card);
+      });
+      $('wordGrid').replaceChildren(fragment);
+    }
+
+    function renderAnswerColumns() {
+      const columns = $('contestantColumns');
+      const fragment = document.createDocumentFragment();
+      columns.style.gridTemplateColumns = `repeat(${state.contestantCount}, minmax(180px, 1fr))`;
+      columns.style.minWidth = `${state.contestantCount * 194}px`;
+
+      for (let contestant = 0; contestant < state.contestantCount; contestant++) {
+        const column = document.createElement('div');
+        column.className = 'contestant-column';
+        const title = document.createElement('div');
+        title.className = 'contestant-title';
+        const heading = document.createElement('h3');
+        heading.textContent = `Contestant ${contestant + 1}`;
+        title.append(heading);
+        column.append(title);
+
+        for (let index = 0; index < state.wordCount; index++) {
+          const row = document.createElement('div');
+          row.className = 'answer-row';
+          const number = document.createElement('span');
+          number.className = 'answer-number';
+          number.textContent = `${index + 1}.`;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'answer-input';
+          input.dataset.contestant = String(contestant);
+          input.dataset.index = String(index);
+          input.setAttribute('aria-label', `Contestant ${contestant + 1}, word ${index + 1}`);
+          input.placeholder = 'Enter word';
+          input.autocomplete = 'off';
+          input.spellcheck = false;
+          row.append(number, input);
+          column.append(row);
+        }
+        fragment.append(column);
+      }
+      columns.replaceChildren(fragment);
+    }
+
+    function renderPhase() {
+      const isMemorizing = state.phase === 'memorize';
+      const isGuessing = state.phase === 'guess';
+      const isResults = state.phase === 'results';
+      $('setupSection').hidden = state.phase !== 'setup';
+      $('gameSection').hidden = state.phase === 'setup';
+      $('memoryPanel').hidden = !isMemorizing && !isResults;
+      $('guessPanel').hidden = !isGuessing && !isResults;
+      $('resultsPanel').hidden = !isResults;
+      $('round').textContent = state.round;
+      $('wordTotal').textContent = state.wordCount;
+      $('contestantTotal').textContent = state.contestantCount;
+      $('phaseButton').hidden = isResults;
+      $('timerButton').hidden = isResults;
+
+      if (isMemorizing) {
+        $('status').textContent = 'Memorization Phase';
+        $('phaseNote').textContent = 'Memorize these words in their numbered order.';
+        $('phaseButton').textContent = 'Hide Words and Start Guessing';
+        $('instructions').textContent = 'When ready, hide the words. A separate answer-key window will open for the host.';
+      } else if (isGuessing) {
+        $('status').textContent = 'Guessing Phase';
+        $('phaseNote').textContent = 'Contestants: type each word in its original numbered position.';
+        $('phaseButton').textContent = 'Check Answers and Reveal Words';
+        $('instructions').textContent = 'Each column belongs to one contestant. Scroll sideways to reach additional contestants.';
+      } else if (isResults) {
+        $('status').textContent = 'Round Complete';
+        $('phaseNote').textContent = 'Review the revealed sequence and contestant answers.';
+        $('instructions').textContent = 'Select New Order for another round, or Change word / contestant count to configure a new game.';
+      }
+    }
+
+    function openHostKey() {
+      // Called synchronously from a button click so browsers can allow the popup.
+      let popup = null;
+      try {
+        popup = window.open('', 'wordMemoryHostAnswerKey', 'popup=yes,width=420,height=680,resizable=yes,scrollbars=yes');
+      } catch (error) {
+        popup = null;
+      }
+      if (!popup) {
+        alert('The host answer-key window was blocked. Allow pop-ups for this page, then click "Open Host Answer Key".');
         return;
       }
-
-      emojiCount = requestedCount;
-      round = 1;
-      hidden = false;
-
-      currentEmojis = shuffleEmojis();
-
-      resetTimer();
-      renderGrid();
+      state.hostWindow = popup;
+      try {
+        const doc = popup.document;
+        doc.open();
+        doc.write('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Host Only - Word Answer Key</title><style>body{font-family:system-ui,Arial,sans-serif;background:#111b2b;color:#f5f7fb;margin:0;padding:22px}h1{font-size:23px;margin:0 0 7px;color:#f6cd64}p{color:#b4c6dd;line-height:1.5}ol{padding-left:31px;columns:2;column-gap:26px}li{break-inside:avoid;padding:6px 0;border-bottom:1px solid #30425d}strong{color:#f6cd64}.notice{background:#243750;border-radius:9px;padding:12px;font-size:13px}button{padding:10px 15px;border:0;border-radius:8px;background:#f6cd64;color:#131a24;font-weight:700;cursor:pointer}</style></head><body><h1>Host Answer Key</h1><p>Round <strong id="keyRound"></strong> - <span id="keyCount"></span> words</p><p class="notice">Host only. Keep this smaller window on a private screen, away from contestants.</p><ol id="keyList"></ol><button id="keyClose">Close Window</button></body></html>');
+        doc.close();
+        doc.getElementById('keyRound').textContent = state.round;
+        doc.getElementById('keyCount').textContent = state.wordCount;
+        const keyList = doc.getElementById('keyList');
+        state.words.forEach((word) => {
+          const li = doc.createElement('li');
+          li.textContent = word;
+          keyList.append(li);
+        });
+        doc.getElementById('keyClose').addEventListener('click', () => popup.close());
+        popup.focus();
+      } catch (error) {
+        alert('Could not update the host answer-key window. Check your browser popup settings.');
+      }
     }
 
-    // GENERATE NEW ORDER
+    function closeHostKey() {
+      try {
+        if (state.hostWindow && !state.hostWindow.closed) state.hostWindow.close();
+      } catch (error) { /* A browser may block closing a previously opened window. */ }
+      state.hostWindow = null;
+    }
+
+    function beginRound() {
+      closeHostKey();
+      state.words = shuffledWords();
+      state.phase = 'memorize';
+      resetTimer();
+      renderWordGrid();
+      renderAnswerColumns();
+      renderPhase();
+    }
+
+    function startGame() {
+      const requestedWords = Number($('wordCount').value);
+      const requestedContestants = Number($('contestantCount').value);
+      if (!Number.isInteger(requestedWords) || requestedWords < 1 || requestedWords > wordPool.length) {
+        alert(`Enter a whole number of words between 1 and ${wordPool.length}.`);
+        $('wordCount').focus();
+        return;
+      }
+      if (!Number.isInteger(requestedContestants) || requestedContestants < 1 || requestedContestants > 20) {
+        alert('Enter a whole number of contestants between 1 and 20.');
+        $('contestantCount').focus();
+        return;
+      }
+      state.wordCount = requestedWords;
+      state.contestantCount = requestedContestants;
+      state.round = 1;
+      beginRound();
+    }
+
+    function normalizeAnswer(text) {
+      return text.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
+    }
+
+    function checkAnswers() {
+      pauseTimer();
+      closeHostKey();
+      const points = Array(state.contestantCount).fill(0);
+      $('contestantColumns').querySelectorAll('.answer-input').forEach((input) => {
+        const contestant = Number(input.dataset.contestant);
+        const index = Number(input.dataset.index);
+        const correct = normalizeAnswer(input.value) === normalizeAnswer(state.words[index]);
+        if (correct) points[contestant]++;
+        input.classList.add(correct ? 'is-correct' : 'is-incorrect');
+        input.disabled = true;
+        input.title = correct ? 'Correct' : `Correct word: ${state.words[index]}`;
+      });
+      const scores = $('scores');
+      const fragment = document.createDocumentFragment();
+      points.forEach((count, index) => {
+        const card = document.createElement('div');
+        card.className = 'score-item';
+        const name = document.createElement('div');
+        name.className = 'score-name';
+        name.textContent = `Contestant ${index + 1}`;
+        const value = document.createElement('div');
+        value.className = 'score-value';
+        value.textContent = `${count} / ${state.wordCount}`;
+        card.append(name, value);
+        fragment.append(card);
+      });
+      scores.replaceChildren(fragment);
+      state.phase = 'results';
+      renderPhase();
+    }
+
+    function phaseAction() {
+      if (state.phase === 'memorize') {
+        state.phase = 'guess';
+        renderPhase();
+        openHostKey();
+      } else if (state.phase === 'guess') {
+        checkAnswers();
+      }
+    }
 
     function newOrder() {
-      round++;
-      currentEmojis = shuffleEmojis();
-      hidden = false;
-
-      resetTimer();
-      renderGrid();
+      state.round++;
+      beginRound();
     }
 
-    // BUTTON EVENTS
+    function returnToSetup() {
+      if (state.phase === 'guess' && !confirm('Return to setup? All answers for this round will be lost.')) return;
+      closeHostKey();
+      resetTimer();
+      state.phase = 'setup';
+      renderPhase();
+    }
 
-    hideButton.addEventListener("click", toggleEmojis);
-    timerButton.addEventListener("click", toggleTimer);
-    newButton.addEventListener("click", newOrder);
-    applyButton.addEventListener("click", applyEmojiCount);
-
-    emojiCountInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        applyEmojiCount();
-      }
+    $('startButton').addEventListener('click', startGame);
+    $('phaseButton').addEventListener('click', phaseAction);
+    $('timerButton').addEventListener('click', toggleTimer);
+    $('newButton').addEventListener('click', newOrder);
+    $('settingsButton').addEventListener('click', returnToSetup);
+    $('hostKeyButton').addEventListener('click', openHostKey);
+    ['wordCount', 'contestantCount'].forEach((id) => {
+      $(id).addEventListener('keydown', (event) => { if (event.key === 'Enter') startGame(); });
     });
-
-    // INITIALIZE GAME
-
-    currentEmojis = shuffleEmojis();
-    renderGrid();
-    updateTimer();
-
+    window.addEventListener('beforeunload', closeHostKey);
+    renderPhase();
+    showTimer();
   </script>
-
 </body>
 </html>
